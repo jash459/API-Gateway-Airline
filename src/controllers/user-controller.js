@@ -1,43 +1,52 @@
 const { StatusCodes } = require('http-status-codes');
 
-const { ErrorResponse } = require('../utils/common');
-const AppError = require('../utils/errors/app-error');
 const { UserService } = require('../services');
+const { SuccessResponse, ErrorResponse } = require('../utils/common');
 
-function validateAuthRequest(req, res, next) {
-    if(!req.body.email) {
-        ErrorResponse.message = 'Something went wrong while authenticating user';
-        ErrorResponse.error = new AppError(['Email not found in the incoming request in the correct form'], StatusCodes.BAD_REQUEST);
-        return res
-                .status(StatusCodes.BAD_REQUEST)
-                .json(ErrorResponse);
-    }
-    if(!req.body.password) {
-        ErrorResponse.message = 'Something went wrong while authenticating user';
-        ErrorResponse.error = new AppError(['password not found in the incoming request in the correct form'], StatusCodes.BAD_REQUEST);
-        return res
-                .status(StatusCodes.BAD_REQUEST)
-                .json(ErrorResponse);
-    }
-    next();
-}
 
-async function checkAuth(req, res, next) {
+/**
+ * POST : /signup 
+ * req-body {email: 'a@b.com', password: '1234'}
+ */
+async function signup(req, res) {
     try {
-        const response = await UserService.isAuthenticated(req.headers['x-access-token']);
-        if(response) {
-            req.user = response; // setting the user id in the req object
-            next();
-        }
+        const user = await UserService.create({
+            email: req.body.email,
+            password: req.body.password
+        });
+        SuccessResponse.data = user;
+        return res
+                .status(StatusCodes.CREATED)
+                .json(SuccessResponse);
     } catch(error) {
+        console.log(error);
+        ErrorResponse.error = error;
         return res
                 .status(error.statusCode)
-                .json(error);
+                .json(ErrorResponse);
     }
-    
+}
+
+async function signin(req, res) {
+    try {
+        const user = await UserService.signin({
+            email: req.body.email,
+            password: req.body.password
+        });
+        SuccessResponse.data = user;
+        return res
+                .status(StatusCodes.CREATED)
+                .json(SuccessResponse);
+    } catch(error) {
+        console.log(error);
+        ErrorResponse.error = error;
+        return res
+                .status(error.statusCode)
+                .json(ErrorResponse);
+    }
 }
 
 module.exports = {
-    validateAuthRequest,
-    checkAuth
+    signup,
+    signin
 }
