@@ -37,6 +37,7 @@ async function checkAuth(req, res, next) {
     
 }
 
+
 module.exports = {
     validateAuthRequest,
     checkAuth
